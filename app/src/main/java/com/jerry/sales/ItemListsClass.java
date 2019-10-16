@@ -166,6 +166,7 @@ public class ItemListsClass extends AppCompatActivity {
         Date date = new Date();
         String stringDate = sFormat.format(date);
         dateText.setText(stringDate);
+        cusName.requestFocus();
         //
         printB.setOnClickListener(new View.OnClickListener() {
             @Override
