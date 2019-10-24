@@ -11,16 +11,39 @@ public class Stock {
         this.unitPrice=unitPrice;
         this.sumTotal = sumTotal;
     }
-    public String getItemName(){
-        return itemName;
-    }
-    public int getQuantity(){
+
+    public int getQuantity() {
         return quantity;
     }
-    public double getSumTotal(){
-        return (quantity*unitPrice);
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
-    public double getUnitPrice(){
+
+    public String getItemName() {
+        return itemName;
+    }
+
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
+    public double getSumTotal() {
+
+        return (quantity*unitPrice);
+
+    }
+
+    public void setSumTotal(double sumTotal) {
+        this.sumTotal = sumTotal;
+    }
+
+    public double getUnitPrice() {
         return unitPrice;
     }
+
+    public void setUnitPrice(double unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
 }

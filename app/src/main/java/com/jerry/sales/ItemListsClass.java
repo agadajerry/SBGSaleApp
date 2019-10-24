@@ -6,6 +6,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.app.DatePickerDialog;
@@ -25,6 +27,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.transition.Slide;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -32,6 +35,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.itextpdf.text.BaseColor;
@@ -69,17 +73,21 @@ import static androidx.core.content.FileProvider.getUriForFile;
 import static java.security.AccessController.getContext;
 
 public class ItemListsClass extends AppCompatActivity {
-    TextView listText = null;
+    TextView grandTotal = null;
     // private ArrayList<Stock> stocks = new ArrayList<Stock>();
     ArrayList<Stock> newList = MainActivity.stocks;
     double totalAmout = 0.00;
-    String lines = "-------------------------------------------------------------------------------\n";
     Button fab, fabClear;
     final private int REQUEST_CODE_PERMISSION = 111;
     File pdfFile;//pdf storage file object
     TextInputEditText cusName;
     TextInputEditText address;
     EditText dateText;
+    RecyclerView recyclerView;
+    Context context;
+    BottomNavigationView bottomNavigationView;
+
+
 
     //business address and discriptions
 
@@ -89,68 +97,80 @@ public class ItemListsClass extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_item_lists_class);
-        listText =  findViewById(R.id.itemListText);
-        fab =  findViewById(R.id.fabBtn);
-        fabClear = findViewById(R.id.fabClear);
+        recyclerView = findViewById(R.id.relCyclerV);
+        bottomNavigationView = findViewById(R.id.bottomNavigate);
+        grandTotal = findViewById(R.id.grandTotal);
 
+        //************************************************************************************************
 
-        // enter transition from activity A.
-        Slide slide = new Slide();
-        slide.setDuration(800);
-        getWindow().setEnterTransition(slide);
-
-        fabClear.setOnClickListener(new View.OnClickListener() {
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
-            public void onClick(View view) {
-                clearArray();
-            }
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
 
-            private void clearArray() {
-                final AlertDialog.Builder alertDialog = new AlertDialog.Builder(ItemListsClass.this);
-                alertDialog.setTitle("Erase All");
-                alertDialog.setMessage("Do you want to Delete The Selected Items?");
-                alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        newList.clear();//clear arraylist contents
-                        listText.setText("");
-                        finish();
-                        Toast.makeText(ItemListsClass.this,"Selected Items Erased!!!",Toast.LENGTH_SHORT).show();
-                    }
-                }).setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                }).create().show();
+                switch(menuItem.getItemId()){
+
+                    case R.id.printId:
+                        showCustomerDialog();
+                        break;
+                    case R.id.clearId:
+                        clearArray();
+                        break;
+                }
+                return true;
             }
         });
 
+        recyclerView.setHasFixedSize(true);
+        LinearLayoutManager lineManger = new LinearLayoutManager(context);
+        recyclerView.setLayoutManager(lineManger);
 
         itemListMethod();
 
+        // method that initalise the adapter
+        initializeAdapter();
 
     }
+    //*******************************************************************************************************
+    private void initializeAdapter() {
+        RecyclerViewAdapter adapter = new RecyclerViewAdapter(newList);
+        recyclerView.setAdapter(adapter);
+    }
+    //*******************************************************************************************************
+
+    private void clearArray() {
+        final AlertDialog.Builder alertDialog = new AlertDialog.Builder(ItemListsClass.this);
+        alertDialog.setTitle("Erase All");
+        alertDialog.setMessage("Do you want to Delete The Selected Items?");
+        alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                newList.clear();//clear arraylist contents
+                grandTotal.setText("");
+                finish();
+                Toast.makeText(ItemListsClass.this,"Selected Items Erased!!!",Toast.LENGTH_SHORT).show();
+            }
+        }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        }).create().show();
+    }
+
 
     private void itemListMethod() {
 
-        for (int i = 0; i < newList.size(); i++) {
 
-            listText.append(lines);
-            listText.append("Product Name-->: " + newList.get(i).getItemName() + "\n" + "quantity-->: " + newList.get(i).getQuantity() + "\n"
-                    + "Unit Price-->" + newList.get(i).getUnitPrice() + "\n" + "Total Price--> " + (newList.get(i).getQuantity() * newList.get(i).getUnitPrice()) + "\n");
-        }
         for (int i = 0; i < newList.size(); i++) {
             totalAmout += newList.get(i).getSumTotal();
 
         }
-        listText.append("----------------------------------------------------\n");
-        listText.append("Grand Total-->" + totalAmout + " Naira\n");
-        listText.append("----------------------------------------------------\n");
+
+        grandTotal.setText("Grand Total\n" + totalAmout + " Naira");
 
     }
 
-    public void fabListener(View view) {
+    public void showCustomerDialog() {
 
 
 //dialog for customer details
@@ -160,6 +180,7 @@ public class ItemListsClass extends AppCompatActivity {
         address = (TextInputEditText) customerDialog.findViewById(R.id.addressId);
         Button printB = (Button) customerDialog.findViewById(R.id.printB);
         dateText = customerDialog.findViewById(R.id.dateField);
+        grandTotal = findViewById(R.id.grandTotal);
         customerDialog.setTitle("Customer Info");
         //
         SimpleDateFormat sFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -171,6 +192,8 @@ public class ItemListsClass extends AppCompatActivity {
         printB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                cusName.requestFocus();
 
                 if (cusName.getText().toString().isEmpty() || address.getText().toString().isEmpty()
                 ||dateText.getText().toString().isEmpty()) {
@@ -191,7 +214,10 @@ public class ItemListsClass extends AppCompatActivity {
                         createPDF();
                         openExternalMemory();
 
+
+
                         newList.clear();// clearing arrayList after the print button is clicked
+                        grandTotal.setText("Reciept\n inside documents,\n internal Memory");
 
                     } catch (FileNotFoundException ex) {
                         ex.printStackTrace();
@@ -209,11 +235,7 @@ public class ItemListsClass extends AppCompatActivity {
 
     }
 
-    public void backBtn(View view) {
-        Intent backIntent = new Intent(ItemListsClass.this, MainActivity.class);
-        startActivity(backIntent);
-        //backIntent
-    }
+
 
 
     //pdf file creation method
@@ -340,12 +362,13 @@ public class ItemListsClass extends AppCompatActivity {
 
             //table of items bought
             //column width
-            float[] columnWidth = {7f, 1.5f, 2f, 2.2f};
+            float[] columnWidth = {1f, 7f, 1.5f, 2f, 2.2f};
             //pdf table
             PdfPTable table = new PdfPTable(columnWidth);
             //table width percentage of the page width
             table.setWidthPercentage(90f);
             table.getDefaultCell().setHorizontalAlignment(Element.ALIGN_CENTER);
+            table.addCell("S/No ");
             table.addCell("Product Descriptions");
             table.addCell("Quantity");
             table.addCell("Unit Price(Naira)");
@@ -357,6 +380,7 @@ public class ItemListsClass extends AppCompatActivity {
                 cells[i].setBackgroundColor(BaseColor.ORANGE);
             }
             for (int j = 0; j < newList.size(); j++) {
+                table.addCell("" + (j+1));
                 table.addCell("" + newList.get(j).getItemName());
                 table.addCell("" + newList.get(j).getQuantity());
                 table.addCell("" + newList.get(j).getUnitPrice());
@@ -430,10 +454,9 @@ public class ItemListsClass extends AppCompatActivity {
             codeQRImage.scaleAbsolute(100,100);
             doc.add(codeQRImage);
 
-            Toast.makeText(this, "The file is created Successfully", Toast.LENGTH_LONG).show();
-            listText.setText("PDF file is created in Documents folder inside internal memory");
-            Toast.makeText(this, "The file is created Successfully", Toast.LENGTH_LONG).show();
-            listText.setText("PDF file is created in Documents folder inside internal memory");
+            Toast.makeText(this, "The file was created Successfully", Toast.LENGTH_LONG).show();
+
+
             doc.close();
 
         }
@@ -450,7 +473,7 @@ public class ItemListsClass extends AppCompatActivity {
                     //permission granted
                     try {
                         createPDF();
-
+                       // openExternalMemory();
                     } catch (FileNotFoundException ex) {
                         ex.printStackTrace();
                     } catch (DocumentException dx) {
@@ -510,6 +533,14 @@ public class ItemListsClass extends AppCompatActivity {
 
     }
 
+    @Override
+    public void onBackPressed() {
+        Intent mainClassIntent = new Intent(ItemListsClass.this, MainActivity.class);
+        startActivity(mainClassIntent);
 
+        overridePendingTransition(R.transition.slin_in_left,R.transition.slide_out_right);
+
+        super.onBackPressed();
+    }
 
 }

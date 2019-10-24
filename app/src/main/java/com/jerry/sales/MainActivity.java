@@ -18,7 +18,10 @@ import android.transition.Transition;
 import android.transition.TransitionInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         productField =(TextInputEditText)findViewById(R.id.productId);
         quantityField =(TextInputEditText)findViewById(R.id.quantityId);
         unitPriceField =(TextInputEditText)findViewById(R.id.unitPrice);
+        ImageView imageView =findViewById(R.id.imageView);
         //**********************************************************************************
         addB.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -70,20 +74,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         listB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent listIntent = new Intent(MainActivity.this,ItemListsClass.class);
-                ActivityOptionsCompat compat = ActivityOptionsCompat
-                        .makeSceneTransitionAnimation(MainActivity.this,null);
+                if (stocks.size() < 1) {
+                    Toast.makeText(MainActivity.this, "No product in the List", Toast.LENGTH_SHORT).show();
+                } else {
+                    Intent listIntent = new Intent(MainActivity.this, ItemListsClass.class);
 
-                startActivity(listIntent ,compat.toBundle());
+                    startActivity(listIntent);
+                    overridePendingTransition(R.transition.slide_in_right,R.transition.slide_out_left);
 
+                }
             }
         });
-        //transaction of this activity to next
-        TransitionInflater tf = TransitionInflater.from(this);
-        Transition t = tf.inflateTransition(R.transition.my_transition);
-
-
-
+        //**********************************************************************************************
+        Animation expandIn = AnimationUtils.loadAnimation(MainActivity.this,R.anim.expanding_in);
+        imageView.startAnimation(expandIn);
 
 
         actionToggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.open, R.string.close);
